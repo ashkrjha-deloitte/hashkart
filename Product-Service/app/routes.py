@@ -1,3 +1,4 @@
+from crypt import methods
 import imp
 from itertools import product
 import json
@@ -8,6 +9,7 @@ from app import app, db
 from app.models import Product
 from flask import Flask, request, jsonify, make_response, Response, send_from_directory
 from sqlalchemy import literal_column, func, desc, select
+import requests
 
 
 @app.route('/product', methods=['POST'])
@@ -16,7 +18,7 @@ def create_product():
     app.logger.info('create_product')
     data = request.get_json()
     new_product = Product(product_name=data['product_name'], price=data['price'],
-                          quantity=data['quantity'], category=data['category'], rating=None, no_of_ratings=None)
+                          quantity=data['quantity'], category=data['category'], rating=0, no_of_ratings=0)
     db.session.add(new_product)
     db.session.commit()
     return jsonify({'message': "Product added!"}), 201
@@ -63,19 +65,6 @@ def get_product_by_category():
     response = jsonify({'result': results})
     return response
 
-
-# @app.route('/product/<product_id>/rating', methods=['PUT'])
-# def add_rating(product_id):
-
-#     app.logger.info('add_rating')
-#     data = request.get_json()
-#     product = Product.query.filter_by(product_id=Product.id).first()
-#     # product.rating = (data["rating"] + (product.rating*product.no_pf_ratings))/(product.no_of_ratings+1)
-#     product.no_of_ratings = product.no_of_ratings + 1
-#     db.session.commit()
-
-#     rresponse = jsonify({'message': 'The rating has been added!'})
-#     return response, 202
 
 @app.route('/product/<product_id>/rating', methods=['PUT'])
 def add_rating(product_id):
@@ -184,3 +173,15 @@ def sort_by_no_of_ratings():
     response = jsonify({'products': output})
 
     return response
+
+
+@app.route('/add_to_cart', methods=['POST'])
+def add_to_cart():
+
+    app.logger.info('add_to_cart')
+    data = request.get_json()
+    product = Product.query.filter(Product.id==data['product_id']).first()
+    if product.quantity < int(data['quantity']):
+        return jsonify({'message': 'Quantity excceding stock!'}), 409
+    res = requests.post('http://127.0.0.1:5002/add_to_cart', json={ 'public_id': data['public_id'], 'product_id' : data['product_id'], 'quantity': data['quantity']})
+    return res.json()

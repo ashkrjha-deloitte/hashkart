@@ -47,12 +47,11 @@ def create_admin():
     data = request.get_json()
 
     hashed_password = generate_password_hash(data['password'], method='sha256')
-
-    new_user = User(public_id=str(uuid.uuid4(
-    )), username=data['username'],  email=data['email'], name=data['name'], password=hashed_password, admin=True)
+    new_id = str(uuid.uuid4())
+    new_user = User(public_id=new_id, username=data['username'],  email=data['email'], name=data['name'], password=hashed_password, admin=True)
     db.session.add(new_user)
     db.session.commit()
-
+    requests.post('http://127.0.0.1:5002/user/' + new_id + '/cart')
     return jsonify({'message': 'Admin created!'}), 201
 
 
@@ -63,12 +62,13 @@ def register_user():
     data = request.get_json()
 
     hashed_password = generate_password_hash(data['password'], method='sha256')
-
-    new_user = User(public_id=str(uuid.uuid4(
-    )), username=data['username'],  email=data['email'], name=data['name'], password=hashed_password, admin=False)
+    new_id = str(uuid.uuid4())
+    print(new_id)
+    new_user = User(public_id=new_id, username=data['username'],  email=data['email'], name=data['name'], password=hashed_password, admin=False)
+    print(new_user)
     db.session.add(new_user)
     db.session.commit()
-
+    requests.post('http://127.0.0.1:5002/user/' + new_id + '/cart')
     response = jsonify({'message': 'New user created!'}), 201
     return response
 
@@ -153,7 +153,7 @@ def get_one_user(current_user, public_id):
     return jsonify({'user': user_data})
 
 
-@app.route('/user', methods=['POST'])
+@app.route('/create_user', methods=['POST'])
 @token_required
 def create_user(current_user):
 
@@ -321,4 +321,12 @@ def sort_by_no_of_ratings(current_user):
 
     app.logger.info('sort_by_no_of_ratings')
     res = requests.get('http://127.0.0.1:5001/products/no_of_ratings/decreasing')
+    return res.json()
+
+@app.route('/product/<product_id>/<quantity>', methods=['POST'])
+@token_required
+def add_to_cart(current_user, product_id, quantity):
+
+    app.logger.info('add_to_cart')
+    res = requests.post('http://127.0.0.1:5001/add_to_cart', json={ 'public_id': current_user.public_id, 'product_id' : product_id, 'quantity': quantity})
     return res.json()
