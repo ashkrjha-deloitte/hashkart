@@ -7,3 +7,8 @@ class Config(object):
     #Swagger
     SWAGGER_URL = '/swagger'
     API_URL = '/static/swagger.json'
+
+    discounts={
+        "DISCOUNT5":0.05,
+        "DISCOUNT10":0.1
+    }

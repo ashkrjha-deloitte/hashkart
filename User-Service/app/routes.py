@@ -330,3 +330,20 @@ def add_to_cart(current_user, product_id, quantity):
     app.logger.info('add_to_cart')
     res = requests.post('http://127.0.0.1:5001/add_to_cart', json={ 'public_id': current_user.public_id, 'product_id' : product_id, 'quantity': quantity})
     return res.json()
+
+
+@app.route('/checkout', methods = ['POST'])
+@token_required
+def checkout(current_user):
+
+    app.logger.info('checkout')
+    res = requests.post('http://127.0.0.1:5002/checkout/'+ str(current_user.public_id))
+    return res.json()
+
+@app.route('/orders', methods=['GET'])
+@token_required
+def orders(current_user):
+
+    app.logger.info('orders')
+    res = requests.get('http://127.0.0.1:5002/orders')
+    return res.json()

@@ -183,5 +183,7 @@ def add_to_cart():
     product = Product.query.filter(Product.id==data['product_id']).first()
     if product.quantity < int(data['quantity']):
         return jsonify({'message': 'Quantity excceding stock!'}), 409
-    res = requests.post('http://127.0.0.1:5002/add_to_cart', json={ 'public_id': data['public_id'], 'product_id' : data['product_id'], 'quantity': data['quantity']})
+    product.quantity = product.quantity - int(data['quantity'])
+    db.session.commit()
+    res = requests.post('http://127.0.0.1:5002/add_to_cart', json={ 'public_id': data['public_id'], 'product_id' : data['product_id'], 'quantity': data['quantity'], 'price' : product.price})
     return res.json()
